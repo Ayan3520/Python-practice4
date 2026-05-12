@@ -1,0 +1,38 @@
+import json
+
+# ============================================================
+# МОДУЛЬ: result_saver.py
+# КЛАСС:  ResultSaver
+# ЗАДАЧА: Сохранение результатов анализа в JSON-файл.
+# ============================================================
+
+class ResultSaver:
+    """
+    Отвечает за запись результатов на диск.
+    Принцип единственной ответственности (Single Responsibility):
+    этот класс знает только о сохранении — больше ничего.
+    """
+
+    def __init__(self, result_data, output_path):
+        # result_data — словарь с результатами анализа
+        self.result_data = result_data
+        # output_path — путь к файлу, например 'output/result.json'
+        self.output_path = output_path
+
+    def save_json(self):
+        """
+        Записывает self.result_data в JSON-файл.
+        
+        json.dump(data, file, indent=4):
+        - data    — словарь Python для сериализации
+        - file    — объект открытого файла
+        - indent=4 — красивое форматирование с отступом в 4 пробела
+        
+        Блок try/except перехватывает ошибки записи (нет прав, диск заполнен).
+        """
+        try:
+            with open(self.output_path, 'w', encoding='utf-8') as f:
+                json.dump(self.result_data, f, indent=4, ensure_ascii=False)
+            print(f"Result saved to {self.output_path}")
+        except Exception as e:
+            print(f"Error while saving JSON: {e}")

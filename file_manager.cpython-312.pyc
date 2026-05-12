@@ -1,0 +1,266 @@
+# ============================================================
+# МОДУЛЬ: analyser.py
+# КЛАССЫ:
+#   1. DataAnalyser        — базовый класс (Task 1, Practice 7)
+#   2. TopStudentsAnalyser — дочерний класс, Вариант D (Task 2, Practice 7)
+#   3. CountryAnalyser     — второй дочерний класс для полиморфизма (Task 5)
+# ============================================================
+
+
+# ────────────────────────────────────────────────────────────
+# TASK 1 — БАЗОВЫЙ КЛАСС DataAnalyser
+# ────────────────────────────────────────────────────────────
+class DataAnalyser:
+    """
+    Базовый класс (Base Class) для всех анализаторов.
+    
+    Концепция:
+    - Определяет ОБЩИЙ ИНТЕРФЕЙС: методы analyse() и print_results()
+    - Сам не выполняет конкретный анализ — это задача дочерних классов
+    - Хранит список студентов и словарь результатов
+    
+    Наследование (Inheritance):
+    Дочерние классы используют синтаксис class Child(DataAnalyser)
+    и получают все атрибуты и методы родителя.
+    """
+
+    def __init__(self, students):
+        """
+        Конструктор базового класса.
+        Принимает список студентов и инициализирует пустой словарь результата.
+        """
+        # self.students — список словарей, загруженных DataLoader
+        self.students = students
+        # self.result будет заполнен в методе analyse() дочернего класса
+        self.result = {}
+
+    def analyse(self):
+        """
+        Метод-заглушка (placeholder).
+        В базовом классе не содержит реальной логики —
+        это сигнал, что метод ДОЛЖЕН быть переопределён в дочернем классе.
+        
+        Такой паттерн называется Template Method / Abstract Method.
+        """
+        print("Not implemented — use a child class")
+
+    def print_results(self):
+        """
+        Базовая версия вывода: простой цикл по словарю self.result.
+        
+        Дочерние классы вызывают super().print_results() внутри своей
+        переопределённой версии — чтобы не дублировать этот цикл.
+        
+        .items() возвращает пары (ключ, значение) из словаря.
+        """
+        for key, value in self.result.items():
+            print(f"{key}: {value}")
+
+    def __str__(self):
+        """
+        Магический метод __str__ определяет, что выводит print(объект).
+        Базовая версия: простая информация о классе и количестве студентов.
+        """
+        return f"DataAnalyser: base class, {len(self.students)} students"
+
+
+# ────────────────────────────────────────────────────────────
+# TASK 2 — ДОЧЕРНИЙ КЛАСС: Вариант D
+# TopStudentsAnalyser: ТОП-10 студентов по баллу за экзамен
+# ────────────────────────────────────────────────────────────
+class TopStudentsAnalyser(DataAnalyser):
+    """
+    Дочерний класс (Child Class) для Варианта D.
+    
+    Наследует от DataAnalyser:
+    - Получает self.students и self.result от родителя через super().__init__()
+    - Переопределяет (Override) методы: analyse(), print_results(), __str__()
+    
+    Задача: найти 10 студентов с наивысшим баллом за финальный экзамен,
+    а также применить lambda и filter (как требует задание).
+    """
+
+    def __init__(self, students):
+        """
+        Конструктор дочернего класса.
+        
+        super().__init__(students) — обязательный вызов конструктора родителя.
+        Это инициализирует self.students и self.result из базового класса.
+        Без super().__init__() атрибуты родителя не будут доступны.
+        """
+        super().__init__(students)
+
+    def analyse(self):
+        """
+        Переопределение (Override) метода analyse().
+        
+        Логика Варианта D:
+        1. Конвертируем нужные поля из строк в числа (float)
+        2. Фильтруем некорректные записи с помощью filter() + lambda
+        3. Сортируем по final_exam_score по убыванию
+        4. Берём первые 10 записей
+        5. Сохраняем результат в self.result
+        
+        Используемые концепции:
+        - lambda: анонимная функция в одну строку
+        - filter(): встроенная функция высшего порядка
+        - sorted(): возвращает новый отсортированный список
+        - Exception handling: try/except для безопасной конвертации
+        """
+        print("Analysing top 10 students by final exam score...")
+
+        # Шаг 1: Преобразуем данные — строки → числа, пропускаем ошибки
+        processed_data = []
+        for s in self.students:
+            try:
+                score = float(s['final_exam_score'])
+                gpa   = float(s['GPA'])
+                processed_data.append({
+                    "student_id": s['student_id'],
+                    "country":    s['country'],
+                    "major":      s['major'],
+                    "exam_score": score,
+                    "GPA":        gpa
+                })
+            except (ValueError, KeyError):
+                # ValueError: строка не конвертируется в float (например, "N/A")
+                # KeyError: колонки нет в словаре
+                continue  # пропускаем проблемную строку
+
+        # Шаг 2: filter() + lambda — оставляем только записи с корректным score
+        # lambda x: x['exam_score'] > 0  →  анонимная функция: True если score > 0
+        # filter(функция, список)        →  возвращает итератор с подходящими элементами
+        # list(...)                      →  преобразуем итератор в список
+        valid_data = list(filter(lambda x: x['exam_score'] > 0, processed_data))
+
+        # Шаг 3: sorted() с lambda для сортировки по exam_score
+        # key=lambda x: x['exam_score']  →  сортируем по этому полю
+        # reverse=True                   →  по убыванию (от наибольшего к наименьшему)
+        # [:10]                          →  срез: берём первые 10 элементов
+        top_10 = sorted(valid_data, key=lambda x: x['exam_score'], reverse=True)[:10]
+
+        # Шаг 4: Формируем итоговый словарь — он же будет сохранён в JSON
+        self.result = {
+            "variant": "D",
+            "analysis_type": "Top 10 Students by Final Exam Score",
+            "total_students": len(valid_data),
+            "top_10": top_10
+        }
+
+        print(f"Analysis complete. Processed {len(valid_data)} valid records.")
+        return self.result
+
+    def print_results(self):
+        """
+        Переопределение (Override) метода print_results().
+        
+        Task 3: Дочерний класс добавляет красивый заголовок и футер,
+        а сам вывод данных делегирует родительскому super().print_results().
+        
+        Структура:
+        ==============================  ← header (наш код)
+        TOP 10 STUDENTS REPORT          ← header (наш код)
+        ==============================  ← header (наш код)
+        variant: D                      ← super().print_results() выводит это
+        analysis_type: ...              ← super().print_results() выводит это
+        total_students: ...             ← super().print_results() выводит это
+        top_10: [...]                   ← super().print_results() выводит это
+        ==============================  ← footer (наш код)
+        + подробная таблица топ-10      ← наш дополнительный вывод
+        ==============================  ← footer (наш код)
+        """
+        print("\n" + "=" * 50)
+        print("       TOP 10 STUDENTS ANALYSIS REPORT        ")
+        print("=" * 50)
+
+        # Вызываем родительский метод — он выведет все ключи словаря
+        # Это и есть Method Overriding с вызовом super()
+        super().print_results()
+
+        # Добавляем детальную таблицу топ-10 (сверх базового вывода)
+        print("-" * 50)
+        print(f"{'#':<3} {'ID':<12} {'Score':>6} {'GPA':>5}  {'Major':<25} {'Country'}")
+        print("-" * 50)
+        for i, s in enumerate(self.result.get('top_10', []), 1):
+            print(f"{i:<3} {s['student_id']:<12} {s['exam_score']:>6.1f} "
+                  f"{s['GPA']:>5.2f}  {s['major']:<25} {s['country']}")
+        print("=" * 50 + "\n")
+
+    def __str__(self):
+        """
+        Переопределение __str__ для дочернего класса.
+        Возвращает более специфичное описание.
+        """
+        return f"TopStudentsAnalyser: Top 10 by Exam Score, {len(self.students)} students"
+
+
+# ────────────────────────────────────────────────────────────
+# TASK 5 — ВТОРОЙ КЛАСС ДЛЯ ПОЛИМОРФИЗМА
+# CountryAnalyser: анализ студентов по странам (Вариант B)
+# Используется только в демонстрации полиморфизма в main.py
+# ────────────────────────────────────────────────────────────
+class CountryAnalyser(DataAnalyser):
+    """
+    Второй дочерний класс — для демонстрации полиморфизма (Task 5).
+    Анализирует распределение студентов по странам.
+    
+    Полиморфизм (Polymorphism):
+    Один и тот же вызов a.analyse() и a.print_results() на объектах
+    разных классов производит РАЗНОЕ поведение.
+    Цикл в main.py не знает, какой именно класс перед ним —
+    он просто вызывает методы с одинаковыми именами.
+    """
+
+    def __init__(self, students):
+        super().__init__(students)
+
+    def analyse(self):
+        """
+        Логика Варианта B: считаем количество студентов из каждой страны,
+        находим топ-3 страны.
+        
+        Используем:
+        - Словарь для подсчёта (Counter-паттерн)
+        - sorted() с lambda для сортировки по значению
+        - filter() + lambda для исключения пустых стран
+        """
+        print("Analysing student distribution by country...")
+
+        # filter(): оставляем только записи с непустым полем country
+        valid = list(filter(lambda s: s.get('country', '').strip() != '', self.students))
+
+        # Подсчёт студентов по странам вручную (без Counter)
+        country_counts = {}
+        for s in valid:
+            country = s['country']
+            # dict.get(key, default) — если ключ отсутствует, возвращает default
+            country_counts[country] = country_counts.get(country, 0) + 1
+
+        # Сортируем страны по количеству студентов (убывание)
+        # .items() → список пар (страна, количество)
+        # lambda x: x[1] → сортируем по второму элементу пары (количество)
+        sorted_countries = sorted(country_counts.items(), key=lambda x: x[1], reverse=True)
+
+        self.result = {
+            "variant": "B",
+            "analysis_type": "Student Distribution by Country",
+            "total_students": len(valid),
+            "total_countries": len(country_counts),
+            "top_3": sorted_countries[:3],
+            "all_countries": sorted_countries
+        }
+        print(f"Analysis complete. Found {len(country_counts)} countries.")
+        return self.result
+
+    def print_results(self):
+        print("\n" + "=" * 50)
+        print("       COUNTRY ANALYSIS REPORT                ")
+        print("=" * 50)
+        # Выводим только ключевые метрики (не all_countries — слишком длинно)
+        print(f"total_students: {self.result.get('total_students')}")
+        print(f"total_countries: {self.result.get('total_countries')}")
+        print(f"top_3: {self.result.get('top_3')}")
+        print("=" * 50 + "\n")
+
+    def __str__(self):
+        return f"CountryAnalyser: Country Distribution, {len(self.students)} students"

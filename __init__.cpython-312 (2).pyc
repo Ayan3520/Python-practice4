@@ -1,0 +1,50 @@
+import csv
+
+# ============================================================
+# МОДУЛЬ: data_loader.py
+# КЛАСС:  DataLoader
+# ЗАДАЧА: Чтение CSV-файла и хранение данных в списке словарей.
+# ============================================================
+
+class DataLoader:
+    """
+    Отвечает за загрузку данных из CSV-файла.
+    После вызова load() атрибут self.students содержит
+    список словарей — по одному на каждого студента.
+    """
+
+    def __init__(self, filename):
+        self.filename = filename
+        # Пустой список: заполнится после вызова load()
+        self.students = []
+
+    def load(self):
+        """
+        Читает CSV с помощью csv.DictReader.
+        DictReader автоматически использует первую строку как заголовки
+        и возвращает каждую следующую строку как словарь {колонка: значение}.
+        
+        Блок try/except перехватывает ошибки ввода-вывода (файл не найден,
+        неверная кодировка и т.д.) и выводит понятное сообщение.
+        """
+        print("Loading data...")
+        try:
+            with open(self.filename, mode='r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                self.students = list(reader)
+            print(f"Data loaded successfully: {len(self.students)} students")
+            return self.students
+        except Exception as e:
+            print(f"Error during loading: {e}")
+            return []
+
+    def preview(self, n=5):
+        """
+        Выводит первые n строк для быстрой визуальной проверки данных.
+        self.students[:n] — срез списка от 0 до n (не включая n).
+        """
+        print(f"\nFirst {n} rows:")
+        print("-" * 50)
+        for s in self.students[:n]:
+            print(f"ID: {s['student_id']} | Country: {s['country']} | GPA: {s['GPA']}")
+        print("-" * 50)

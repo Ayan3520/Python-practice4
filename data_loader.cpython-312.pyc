@@ -1,0 +1,45 @@
+import os
+
+# ============================================================
+# МОДУЛЬ: file_manager.py
+# КЛАСС:  FileManager
+# ЗАДАЧА: Работа с файловой системой — проверка файла и создание папки.
+# ============================================================
+
+class FileManager:
+    """
+    Отвечает за всё, что связано с файловой системой:
+    - проверяет, существует ли входной CSV-файл
+    - создаёт папку output/ для сохранения результатов
+    """
+
+    def __init__(self, filename):
+        # Сохраняем имя файла как атрибут экземпляра.
+        # self.filename доступен во всех методах этого класса.
+        self.filename = filename
+
+    def check_file(self):
+        """
+        Проверяет существование файла с помощью os.path.exists().
+        Возвращает True, если файл найден, иначе False.
+        """
+        print("Checking file...")
+        if os.path.exists(self.filename):
+            print(f"File found: {self.filename}")
+            return True
+        else:
+            print(f"Error: {self.filename} not found.")
+            print("Make sure the CSV file is in the same folder as main.py.")
+            return False
+
+    def create_output_folder(self, folder='output'):
+        """
+        Создаёт папку для результатов, если она ещё не существует.
+        os.makedirs() создаёт папку (и все промежуточные, если нужно).
+        """
+        print("Checking output folder...")
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+            print(f"Output folder created: {folder}/")
+        else:
+            print(f"Output folder already exists: {folder}/")
